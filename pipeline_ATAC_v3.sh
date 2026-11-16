@@ -108,23 +108,23 @@ fi
 
 ###STEP1: Barcode handling/MGIKIT
 echo "STEP1: Barcode handling/MGIKIT"
-$MGIKIT demultiplex --read1 $FQ1 --read2 $FQ2 --sample-sheet $BARCODELIST --output $OUTDIR/demux --template i720 --run 01 --threads $THREADS
+$MGIKIT demultiplex --read1 $FQ1 --read2 $FQ2 --sample-sheet $BARCODELIST --output $OUTDIR/demux --template i720 --run 01 --threads $THREADS --instrument R2100400190055
 get_timing
 
 ###STEP2: renaming fastq headers/SEQKIT
 echo "STEP2: renaming fastq headers"
 nextcall () {
     i=$1
-    if [ -e $OUTDIR/demux/"$i"_*_L01_R1_001.fastq.gz ]; then
-        #$SEQKIT replace -p '^(\S+) (.+):([^:]+)$' -r '${3}:${1} ${2}' --threads 1 -o $OUTDIR/demux/"$i"_R1_001.renamed.fastq.gz $OUTDIR/demux/"$i"_*_L01_R1_001.fastq.gz
-        #$SEQKIT replace -p '^(\S+) (.+):([^:]+)$' -r '${3}:${1} ${2}' --threads 1 -o $OUTDIR/demux/"$i"_R2_001.renamed.fastq.gz $OUTDIR/demux/"$i"_*_L01_R2_001.fastq.gz
-        zcat $OUTDIR/demux/"$i"_*_L01_R1_001.fastq.gz | awk -v var="$i" 'NR%4==1{ sub(/^@/, "@" var ":") } {print}' | gzip > $OUTDIR/demux/"$i"_R1_001.renamed.fastq.gz
-        zcat $OUTDIR/demux/"$i"_*_L01_R2_001.fastq.gz | awk -v var="$i" 'NR%4==1{ sub(/^@/, "@" var ":") } {print}' | gzip > $OUTDIR/demux/"$i"_R2_001.renamed.fastq.gz
+    if [ -e $OUTDIR/demux/"$i"_*_R1_001.fastq.gz ]; then
+        #$SEQKIT replace -p '^(\S+) (.+):([^:]+)$' -r '${3}:${1} ${2}' --threads 1 -o $OUTDIR/demux/"$i"_R1_001.renamed.fastq.gz $OUTDIR/demux/"$i"_*_R1_001.fastq.gz
+        #$SEQKIT replace -p '^(\S+) (.+):([^:]+)$' -r '${3}:${1} ${2}' --threads 1 -o $OUTDIR/demux/"$i"_R2_001.renamed.fastq.gz $OUTDIR/demux/"$i"_*_R2_001.fastq.gz
+        zcat $OUTDIR/demux/"$i"_*_R1_001.fastq.gz | awk -v var="$i" 'NR%4==1{ sub(/^@/, "@" var ":") } {print}' | gzip > $OUTDIR/demux/"$i"_R1_001.renamed.fastq.gz
+        zcat $OUTDIR/demux/"$i"_*_R2_001.fastq.gz | awk -v var="$i" 'NR%4==1{ sub(/^@/, "@" var ":") } {print}' | gzip > $OUTDIR/demux/"$i"_R2_001.renamed.fastq.gz
     fi
 }
 
 #cut -f1 $BARCODELIST | grep -v 'sample_id' > $OUTDIR/sample_list.txt
-find $OUTDIR/demux/ -size +100k -type f -name '*L01_R1_001.fastq.gz' -printf "%f\n" | sed 's/_/\t/g' | awk '{print $1"_"$2}' | grep -v Undetermined > $OUTDIR/sample_list.txt
+find $OUTDIR/demux/ -size +100k -type f -name '*R1_001.fastq.gz' -printf "%f\n" | sed 's/_/\t/g' | awk '{print $1"_"$2}' | grep -v Undetermined > $OUTDIR/sample_list.txt
 for i in $(cat $OUTDIR/sample_list.txt); do
     #njobs=$(pgrep -cu "$(whoami)" -f "seqkit" || true)
     njobs=$(pgrep -cu "$(whoami)" -f "awk" || true)
